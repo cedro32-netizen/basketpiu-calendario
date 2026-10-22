@@ -10,5 +10,50 @@ function addCell(tr,label,value,cls){const td=document.createElement('td');td.da
 function fillSelect(el,values){for(const v of [...new Set(values.map(clean).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'it'))){const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)}}
 function render(){const q=els.search.value.toLocaleLowerCase('it');const filtered=all.filter(g=>(!els.date.value||g.data===els.date.value)&&(!els.champ.value||g.campionato===els.champ.value)&&(!els.gym.value||g.palestra===els.gym.value)&&(!els.referee.value||clean(g.arbitri).includes(els.referee.value))&&(!q||[g.data,g.ora,g.campionato,g.casa,g.ospiti,g.palestra,g.arbitri,g.numero].some(v=>clean(v).toLocaleLowerCase('it').includes(q))));els.games.replaceChildren();for(const g of filtered){const tr=document.createElement('tr');addCell(tr,'Data',dateLabel(g.data));addCell(tr,'Ora',g.ora);addCell(tr,'Campionato',g.campionato);addCell(tr,'Casa',g.casa,'home');addCell(tr,'Ospiti',g.ospiti);addCell(tr,'Palestra',g.palestra);addCell(tr,'Arbitri',g.arbitri);els.games.appendChild(tr)}if(!filtered.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.className='empty';td.textContent='Nessuna partita trovata.';tr.appendChild(td);els.games.appendChild(tr)}els.status.textContent=`${filtered.length} partite visualizzate su ${all.length}`}
 for(const el of [els.search,els.date,els.champ,els.gym,els.referee])el.addEventListener('input',render);
-fetch('./partite.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Dati non ancora disponibili');return r.json()}).then(data=>{all=(Array.isArray(data)?data:[]).map(g=>({numero:clean(g.numero),data:clean(g.data),ora:clean(g.ora),campionato:clean(g.campionato),casa:clean(g.casa),ospiti:clean(g.ospiti),palestra:clean(g.palestra),arbitri:clean(g.arbitri)})).filter(g=>g.data&&(g.casa||g.ospiti||g.campionato));all.sort((a,b)=>(a.data+' '+a.ora).localeCompare(b.data+' '+b.ora));fillSelect(els.champ,all.map(g=>g.campionato));fillSelect(els.gym,all.map(g=>g.palestra));fillSelect(els.referee,all.flatMap(g=>g.arbitri.split(/[,;/]/).map(s=>s.trim())));render()}).catch(()=>{els.status.textContent='Il calendario è pronto. Manca ancora il collegamento ai dati aggiornati.';els.games.innerHTML='<tr><td class="empty" colspan="7">Le partite compariranno dopo la configurazione della sincronizzazione.</td></tr>'});
+  const DATI_BASKETPIU =
+  "https://script.google.com/macros/s/AKfycbzmHpei9HWeYuKa1C-AXwF6I_i47K5qM83dZLgB20UkEK5XmaWmdY58M0ukc2nrFQI/exec";
+
+function caricaPartiteBasketpiu() {
+  return new Promise((resolve, reject) => {
+    const nome = "basketpiuCallback";
+    const script = document.createElement("script");
+
+    const timeout = setTimeout(() => {
+      pulisci();
+      reject(new Error("Tempo di caricamento scaduto"));
+    }, 30000);
+
+    function pulisci() {
+      clearTimeout(timeout);
+      script.remove();
+      delete window[nome];
+    }
+
+    window[nome] = dati => {
+      pulisci();
+      if (!dati.successo) {
+        reject(new Error("Errore nel calendario"));
+        return;
+      }
+
+      resolve((dati.partite || []).map(p => ({
+        ...p,
+        arbitri: p.arbitro || "Da assegnare"
+      })));
+    };
+
+    script.onerror = () => {
+      pulisci();
+      reject(new Error("Collegamento non riuscito"));
+    };
+
+    script.src =
+      DATI_BASKETPIU +
+      "?callback=" + nome +
+      "&t=" + Date.now();
+
+    document.head.appendChild(script);
+  });
+}
+caricaPartiteBasketpiu().then(data=>{all=(Array.isArray(data)?data:[]).map(g=>({numero:clean(g.numero),data:clean(g.data),ora:clean(g.ora),campionato:clean(g.campionato),casa:clean(g.casa),ospiti:clean(g.ospiti),palestra:clean(g.palestra),arbitri:clean(g.arbitri)})).filter(g=>g.data&&(g.casa||g.ospiti||g.campionato));all.sort((a,b)=>(a.data+' '+a.ora).localeCompare(b.data+' '+b.ora));fillSelect(els.champ,all.map(g=>g.campionato));fillSelect(els.gym,all.map(g=>g.palestra));fillSelect(els.referee,all.flatMap(g=>g.arbitri.split(/[,;/]/).map(s=>s.trim())));render()}).catch(()=>{els.status.textContent='Il calendario è pronto. Manca ancora il collegamento ai dati aggiornati.';els.games.innerHTML='<tr><td class="empty" colspan="7">Le partite compariranno dopo la configurazione della sincronizzazione.</td></tr>'});
 </script></body></html>
