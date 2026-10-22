@@ -55,5 +55,11 @@ function caricaPartiteBasketpiu() {
     document.head.appendChild(script);
   });
 }
-caricaPartiteBasketpiu().then(data=>{all=(Array.isArray(data)?data:[]).map(g=>({numero:clean(g.numero),data:clean(g.data),ora:clean(g.ora),campionato:clean(g.campionato),casa:clean(g.casa),ospiti:clean(g.ospiti),palestra:clean(g.palestra),arbitri:clean(g.arbitro)})).filter(g=>g.data&&(g.casa||g.ospiti||g.campionato));all.sort((a,b)=>(a.data+' '+a.ora).localeCompare(b.data+' '+b.ora));fillSelect(els.champ,all.map(g=>g.campionato));fillSelect(els.gym,all.map(g=>g.palestra));fillSelect(els.referee,all.flatMap(g=>g.arbitri.split(/[,;/]/).map(s=>s.trim())));render()}).catch(()=>{els.status.textContent='Il calendario è pronto. Manca ancora il collegamento ai dati aggiornati.';els.games.innerHTML='<tr><td class="empty" colspan="7">Le partite compariranno dopo la configurazione della sincronizzazione.</td></tr>'});
+caricaPartiteBasketpiu().then(data=>{all=(Array.isArray(data)?data:[]).map(g=>({numero:clean(g.numero),data:clean(g.data),ora:clean(g.ora),campionato:clean(g.campionato),casa:clean(g.casa),ospiti:clean(g.ospite),palestra:clean(g.palestra),arbitri:clean(g.arbitro)})).filter(g=>g.data&&(g.casa||g.ospiti||g.campionato));all.sort((a,b)=>{
+  const converti = p => {
+    const [giorno,mese,anno] = p.data.split('/');
+    return `${anno}-${mese}-${giorno} ${p.ora}`;
+  };
+  return converti(a).localeCompare(converti(b));
+});fillSelect(els.champ,all.map(g=>g.campionato));fillSelect(els.gym,all.map(g=>g.palestra));fillSelect(els.referee,all.flatMap(g=>g.arbitri.split(/[,;/]/).map(s=>s.trim())));render()}).catch(()=>{els.status.textContent='Il calendario è pronto. Manca ancora il collegamento ai dati aggiornati.';els.games.innerHTML='<tr><td class="empty" colspan="7">Le partite compariranno dopo la configurazione della sincronizzazione.</td></tr>'});
 </script></body></html>
