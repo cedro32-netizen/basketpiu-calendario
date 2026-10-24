@@ -55,7 +55,7 @@ function caricaPartiteBasketpiu() {
     document.head.appendChild(script);
   });
 }
-caricaPartiteBasketpiu().then(data=>{all=(Array.isArray(data)?data:[]).map(g=>({numero:clean(g.numero),data:clean(g.data),ora:clean(g.ora),campionato:clean(g.campionato),casa:clean(g.casa),ospiti:clean(g.ospite),palestra:clean(g.palestra),arbitri:clean(g.arbitro)})).filter(g=>g.data&&(g.casa||g.ospiti||g.campionato));all.sort((a,b)=>{
+caricaPartiteBasketpiu().then(data=>{all=(Array.isArray(data)?data:[]).map(g=>({numero:clean(g.numero).replace(/\.0$/, ''),data:clean(g.data),ora:clean(g.ora),campionato:clean(g.campionato),casa:clean(g.casa),ospiti:clean(g.ospite),palestra:clean(g.palestra),arbitri:clean(g.arbitro)})).filter(g=>g.data&&(g.casa||g.ospiti||g.campionato));all.sort((a,b)=>{
   const converti = p => {
     const [giorno,mese,anno] = p.data.split('/');
     return `${anno}-${mese}-${giorno} ${p.ora}`;
